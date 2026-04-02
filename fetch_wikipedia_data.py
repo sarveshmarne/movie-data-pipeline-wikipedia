@@ -10,10 +10,23 @@ headers = {
 # Fetch page
 response = requests.get(url, headers=headers)
 
-# Pass HTML to pandas
+# ✅ Check if request worked
+if response.status_code != 200:
+    print("Failed to fetch page:", response.status_code)
+    exit()
+
+# Read tables
 tables = pd.read_html(response.text)
 
-print(len(tables))
+print("Total tables found:", len(tables))
 
-df = tables[0]
+# ✅ Combine all tables (IMPORTANT)
+df = pd.concat(tables, ignore_index=True)
+
+# Preview
 print(df.head())
+
+# Save to Excel
+df.to_excel("hindi_movies_2025.xlsx", index=False)
+
+print("File saved successfully ✅")
