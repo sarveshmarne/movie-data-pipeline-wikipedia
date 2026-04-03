@@ -2,37 +2,73 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://en.wikipedia.org/wiki/List_of_American_films_of_2025"
+base_url = "https://en.wikipedia.org/wiki/List_of_American_films_of_{}"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
-response = requests.get(url, headers=headers)
-soup = BeautifulSoup(response.text, "html.parser")
+all_data = []
 
-tables = soup.find_all("table", {"class": "wikitable"})
+# Loop from 2025 to 1900
+for year in range(2025, 1899, -1):
+    print(f"Processing {year}...")
 
-df_list = []
+    url = base_url.format(year)
 
-# Skip Top 10 table
-for table in tables[1:]:
-    df = pd.read_html(str(table))[0]
-    df_list.append(df)
+    try:
+        response = requests.get(url, headers=headers)
 
-final_df = pd.concat(df_list, ignore_index=True)
+        if response.status_code != 200:
+            print(f"Skipping {year} (status {response.status_code})")
+            continue
 
-# Clean column names
-final_df.columns = [col[0] if isinstance(col, tuple) else col for col in final_df.columns]
+        soup = BeautifulSoup(response.text, "html.parser")
 
-# Remove unwanted columns
-final_df = final_df.loc[:, ~final_df.columns.str.contains("Ref")]
-final_df = final_df.drop(columns=["Opening", "Opening.1"], errors="ignore")
+        tables = soup.find_all("table", {"class": "wikitable"})
 
-# Add Year column
-final_df["Year"] = 2025
+        for table in tables:
+            df = pd.read_html(str(table))[0]
 
-# Save file
-final_df.to_excel(r"D:\american_movies_2025_clean.xlsx", index=False)
+            # ❌ Skip Top grossing table
+            if "Rank" in df.columns:
+                continue
 
-print("Final cleaned dataset ready ✅")
+            # Flatten multi-index columns
+            df.columns = [
+                col[0] if isinstance(col, tuple) else col
+                for col in df.columns
+            ]
+
+            # ❌ Remove Ref columns
+            df = df.loc[:, ~df.columns.str.contains("Ref", case=False)]
+
+            # ❌ Remove Opening columns if exist
+            df = df.drop(columns=["Opening", "Opening.1"], errors="ignore")
+
+            # ✅ Add Year dynamically
+            df["Year"] = year
+
+            all_data.append(df)
+
+    except Exception as e:
+        print(f"Error in {year}: {e}")
+        continue
+
+# 🔥 Combine all years
+final_df = pd.concat(all_data, ignore_index=True)
+
+# 🚀 Normalize columns (IMPORTANT)
+# Keep only common useful columns
+common_cols = ["Title", "Director", "Cast", "Distributor", "Year"]
+
+for col in common_cols:
+    if col not in final_df.columns:
+        final_df[col] = None
+
+final_df = final_df[common_cols]
+
+# 💾 Save final dataset
+final_df.to_excel(r"D:\american_movies_1900_2025.xlsx", index=False)
+
+print("Final dataset created successfully ✅")
