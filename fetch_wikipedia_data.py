@@ -1,7 +1,8 @@
 import pandas as pd
 import requests
+from bs4 import BeautifulSoup
 
-url = "https://en.wikipedia.org/wiki/List_of_Hindi_films_of_2025"
+url = "https://en.wikipedia.org/wiki/List_of_American_films_of_2025"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
@@ -9,15 +10,24 @@ headers = {
 
 response = requests.get(url, headers=headers)
 
-if response.status_code != 200:
-    print("Failed to fetch page:", response.status_code)
-    exit()
+soup = BeautifulSoup(response.text, "html.parser")
 
-tables = pd.read_html(response.text)
+# ✅ Only get movie tables
+tables = soup.find_all("table", {"class": "wikitable"})
 
-df = pd.concat(tables, ignore_index=True)
+df_list = []
 
-# Save to D drive
-df.to_excel(r"D:\hindi_movies_2025.xlsx", index=False)
+for table in tables:
+    df = pd.read_html(str(table))[0]
+    df_list.append(df)
 
-print("File saved in D drive ✅")
+# ✅ Combine all quarters
+final_df = pd.concat(df_list, ignore_index=True)
+
+# Preview
+print(final_df.head())
+
+# Save clean file
+final_df.to_excel(r"D:\american_movies_2025_clean.xlsx", index=False)
+
+print("Clean file saved ✅")
