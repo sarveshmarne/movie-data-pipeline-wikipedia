@@ -15,20 +15,24 @@ tables = soup.find_all("table", {"class": "wikitable"})
 
 df_list = []
 
-# ❌ Skip Top 10 table
+# Skip Top 10 table
 for table in tables[1:]:
     df = pd.read_html(str(table))[0]
     df_list.append(df)
 
 final_df = pd.concat(df_list, ignore_index=True)
 
-# ✅ Clean column names
+# Clean column names
 final_df.columns = [col[0] if isinstance(col, tuple) else col for col in final_df.columns]
 
-# ❌ Remove Ref column
+# Remove unwanted columns
 final_df = final_df.loc[:, ~final_df.columns.str.contains("Ref")]
+final_df = final_df.drop(columns=["Opening", "Opening.1"], errors="ignore")
+
+# Add Year column
+final_df["Year"] = 2025
 
 # Save file
 final_df.to_excel(r"D:\american_movies_2025_clean.xlsx", index=False)
 
-print("Clean dataset ready ✅")
+print("Final cleaned dataset ready ✅")
