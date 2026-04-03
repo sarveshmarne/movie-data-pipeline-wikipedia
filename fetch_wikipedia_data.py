@@ -9,25 +9,26 @@ headers = {
 }
 
 response = requests.get(url, headers=headers)
-
 soup = BeautifulSoup(response.text, "html.parser")
 
-# ✅ Only get movie tables
 tables = soup.find_all("table", {"class": "wikitable"})
 
 df_list = []
 
-for table in tables:
+# ❌ Skip Top 10 table
+for table in tables[1:]:
     df = pd.read_html(str(table))[0]
     df_list.append(df)
 
-# ✅ Combine all quarters
 final_df = pd.concat(df_list, ignore_index=True)
 
-# Preview
-print(final_df.head())
+# ✅ Clean column names
+final_df.columns = [col[0] if isinstance(col, tuple) else col for col in final_df.columns]
 
-# Save clean file
+# ❌ Remove Ref column
+final_df = final_df.loc[:, ~final_df.columns.str.contains("Ref")]
+
+# Save file
 final_df.to_excel(r"D:\american_movies_2025_clean.xlsx", index=False)
 
-print("Clean file saved ✅")
+print("Clean dataset ready ✅")
