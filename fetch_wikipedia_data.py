@@ -10,7 +10,6 @@ headers = {
 
 all_data = []
 
-# Loop from 2025 to 1900
 for year in range(2025, 1899, -1):
     print(f"Processing {year}...")
 
@@ -20,7 +19,7 @@ for year in range(2025, 1899, -1):
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
-            print(f"Skipping {year} (status {response.status_code})")
+            print(f"Skipping {year}")
             continue
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -30,73 +29,30 @@ for year in range(2025, 1899, -1):
         for table in tables:
             df = pd.read_html(str(table))[0]
 
-            # ❌ Skip Top grossing table
+            # ❌ Skip top grossing table
             if "Rank" in df.columns:
                 continue
 
-            # Flatten multi-index columns
+            # Flatten columns
             df.columns = [
                 col[0] if isinstance(col, tuple) else col
                 for col in df.columns
             ]
 
-            # ❌ Remove Ref columns
-            df = df.loc[:, ~df.columns.str.contains("Ref", case=False)]
-
-            # ❌ Remove Opening columns if exist
-            df = df.drop(columns=["Opening", "Opening.1"], errors="ignore")
-
-            # ✅ Add Year dynamically
+            # ✅ ADD YEAR
             df["Year"] = year
 
+            # ✅ Keep raw data (no cleaning yet)
             all_data.append(df)
 
     except Exception as e:
         print(f"Error in {year}: {e}")
         continue
-    
-# 🔥 Combine all years
-final_df = pd.concat(all_data, ignore_index=True)    
 
-# 🚀 Normalize columns (IMPORTANT)
-# Keep only common useful columns
-common_cols = ["Title", "Director", "Cast", "Distributor", "Year"]
+# 🔥 Combine everything (RAW DATA)
+final_df = pd.concat(all_data, ignore_index=True)
 
-for col in common_cols:
-    if col not in final_df.columns:
-        final_df[col] = None
+# Save RAW dataset
+final_df.to_excel(r"D:\american_movies_raw_1900_2025.xlsx", index=False)
 
-final_df = final_df[common_cols]
-
-# 💾 Save final dataset
-final_df.to_excel(r"D:\american_movies_1900_2025.xlsx", index=False)
-
-print("Final dataset created successfully ✅")
-
-
-
-# ✅ Standardize column names (important)
-final_df.columns = final_df.columns.str.strip()
-
-# 🔥 Rename similar columns (handle variations)
-rename_dict = {
-    "Production company": "Distributor",
-    "Studio": "Distributor",
-    "Production": "Distributor",
-    "Genre(s)": "Genre",
-}
-
-final_df = final_df.rename(columns=rename_dict)
-
-# ✅ Ensure important columns exist
-important_cols = ["Title", "Director", "Cast", "Distributor", "Genre", "Year"]
-
-for col in important_cols:
-    if col not in final_df.columns:
-        final_df[col] = None
-
-# ✅ Keep all useful columns (not just limited ones)
-final_df = final_df[important_cols]
-
-# Save
-final_df.to_excel(r"D:\american_movies_1900_2025_clean_v2.xlsx", index=False)
+print("Raw dataset saved ✅")
