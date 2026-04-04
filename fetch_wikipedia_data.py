@@ -54,9 +54,9 @@ for year in range(2025, 1899, -1):
     except Exception as e:
         print(f"Error in {year}: {e}")
         continue
-
+    
 # 🔥 Combine all years
-final_df = pd.concat(all_data, ignore_index=True)
+final_df = pd.concat(all_data, ignore_index=True)    
 
 # 🚀 Normalize columns (IMPORTANT)
 # Keep only common useful columns
@@ -72,3 +72,31 @@ final_df = final_df[common_cols]
 final_df.to_excel(r"D:\american_movies_1900_2025.xlsx", index=False)
 
 print("Final dataset created successfully ✅")
+
+
+
+# ✅ Standardize column names (important)
+final_df.columns = final_df.columns.str.strip()
+
+# 🔥 Rename similar columns (handle variations)
+rename_dict = {
+    "Production company": "Distributor",
+    "Studio": "Distributor",
+    "Production": "Distributor",
+    "Genre(s)": "Genre",
+}
+
+final_df = final_df.rename(columns=rename_dict)
+
+# ✅ Ensure important columns exist
+important_cols = ["Title", "Director", "Cast", "Distributor", "Genre", "Year"]
+
+for col in important_cols:
+    if col not in final_df.columns:
+        final_df[col] = None
+
+# ✅ Keep all useful columns (not just limited ones)
+final_df = final_df[important_cols]
+
+# Save
+final_df.to_excel(r"D:\american_movies_1900_2025_clean_v2.xlsx", index=False)
