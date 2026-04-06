@@ -12,7 +12,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
 
-def scrape_wikipedia_hindi_2025():
+def scrape_wikipedia():
     print(f"Processing {LANGUAGE.upper()} movies for {YEAR}...")
 
     try:
@@ -22,38 +22,37 @@ def scrape_wikipedia_hindi_2025():
             print("❌ Failed to fetch data")
             return
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        # 🔥 Read ALL tables directly
+        tables = pd.read_html(response.text)
 
-        tables = soup.find_all("table", {"class": "wikitable"})
-
-        all_data = []
+        valid_tables = []
 
         for table in tables:
-            df = pd.read_html(str(table))[0]
 
-            # ❌ Skip unwanted tables (like Top grossing)
-            if "Rank" in df.columns:
-                continue
+            # ✅ Keep ONLY tables with 'Title' column
+            if "Title" in table.columns:
 
-            # Flatten multi-level columns
-            df.columns = [
-                col[0] if isinstance(col, tuple) else col
-                for col in df.columns
-            ]
+                # ❌ Skip top grossing table
+                if "Rank" in table.columns:
+                    continue
 
-            # Add metadata
-            df["Year"] = YEAR
-            df["Language"] = LANGUAGE
+                # Add metadata
+                table["Year"] = YEAR
+                table["Language"] = LANGUAGE
 
-            all_data.append(df)
+                valid_tables.append(table)
 
-        if not all_data:
-            print("⚠️ No valid tables found")
+        if not valid_tables:
+            print("⚠️ No valid movie tables found")
             return
 
-        final_df = pd.concat(all_data, ignore_index=True)
+        # 🔥 Combine all valid tables
+        final_df = pd.concat(valid_tables, ignore_index=True)
 
-        # 🔥 Save RAW file (IMPORTANT: CSV, not Excel)
+        # 🔥 Save RAW data
+        import os
+        os.makedirs("data/raw", exist_ok=True)
+
         file_path = f"data/raw/movies_wikipedia_{YEAR}_{LANGUAGE}.csv"
         final_df.to_csv(file_path, index=False)
 
@@ -65,4 +64,4 @@ def scrape_wikipedia_hindi_2025():
 
 # 🔹 RUN
 if __name__ == "__main__":
-    scrape_wikipedia_hindi_2025()
+    scrape_wikipedia()
