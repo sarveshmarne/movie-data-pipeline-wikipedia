@@ -10,7 +10,6 @@ df = pd.read_csv("data/raw/movies_wikipedia_2025_hindi.csv")
 # -----------------------------
 # 🔥 STEP 1: BASIC CLEANING
 # -----------------------------
-# Remove empty title rows early (if exists)
 if "Title" in df.columns:
     df = df[df["Title"].notna()]
 
@@ -46,21 +45,22 @@ df = df.rename(columns=column_map)
 print("Columns after rename:", df.columns.tolist())
 
 # -----------------------------
-# 🔥 STEP 3: REMOVE JUNK ROWS
+# 🔥 STEP 3: REMOVE DUPLICATE COLUMNS (CRITICAL FIX)
 # -----------------------------
+df = df.loc[:, ~df.columns.duplicated()]
 
-# Keep only rows where Name exists
+# -----------------------------
+# 🔥 STEP 4: REMOVE JUNK ROWS
+# -----------------------------
 df = df[df["Name"].notna()]
-
-# Remove note rows
 df = df[~df["Name"].str.contains("Implied|multilingual", na=False)]
 
-# Remove top grossing rows (they usually don't have Director)
+# Remove top grossing rows
 if "Director" in df.columns:
     df = df[df["Director"].notna()]
 
 # -----------------------------
-# 🔥 STEP 4: CLEAN TEXT (MOVIE NAME)
+# 🔥 STEP 5: CLEAN MOVIE NAMES
 # -----------------------------
 def clean_text(text):
     if pd.isna(text):
@@ -80,7 +80,7 @@ def clean_text(text):
 df["Name"] = df["Name"].apply(clean_text)
 
 # -----------------------------
-# 🔥 STEP 5: CLEAN REVENUE
+# 🔥 STEP 6: CLEAN REVENUE
 # -----------------------------
 def clean_money(value):
     if pd.isna(value):
@@ -109,7 +109,7 @@ else:
     df["Revenue"] = None
 
 # -----------------------------
-# 🔥 STEP 6: CLEAN CAST (TOP 3)
+# 🔥 STEP 7: CLEAN CAST (TOP 3)
 # -----------------------------
 def split_cast(cast):
     if pd.isna(cast):
@@ -129,7 +129,7 @@ else:
     df["Cast_1"] = df["Cast_2"] = df["Cast_3"] = None
 
 # -----------------------------
-# 🔥 STEP 7: CLEAN DIRECTOR
+# 🔥 STEP 8: CLEAN DIRECTOR
 # -----------------------------
 if "Director" in df.columns:
     df["Director"] = df["Director"].str.split(",").str[0]
@@ -137,7 +137,7 @@ else:
     df["Director"] = None
 
 # -----------------------------
-# 🔥 STEP 8: CLEAN STUDIO (FIXED)
+# 🔥 STEP 9: CLEAN STUDIO
 # -----------------------------
 if "Studio" in df.columns:
     df["Studio"] = df["Studio"].astype(str)
@@ -146,7 +146,7 @@ else:
     df["Studio"] = None
 
 # -----------------------------
-# 🔥 STEP 9: ADD MISSING COLUMNS
+# 🔥 STEP 10: ADD MISSING COLUMNS
 # -----------------------------
 df["Budget"] = None
 df["Verdict"] = None
@@ -163,7 +163,7 @@ if "Language" not in df.columns:
     df["Language"] = "hindi"
 
 # -----------------------------
-# 🔥 STEP 10: FINAL STRUCTURE
+# 🔥 STEP 11: FINAL STRUCTURE
 # -----------------------------
 final_columns = [
     "Year",
@@ -186,7 +186,7 @@ final_columns = [
 final_df = df[final_columns]
 
 # -----------------------------
-# 🔥 STEP 11: SAVE FILE
+# 🔥 STEP 12: SAVE FILE
 # -----------------------------
 os.makedirs("data/processed", exist_ok=True)
 
