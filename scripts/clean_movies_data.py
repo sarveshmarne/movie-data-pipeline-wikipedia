@@ -140,8 +140,14 @@ else:
 # 🔥 STEP 9: CLEAN STUDIO
 # -----------------------------
 if "Studio" in df.columns:
+
+    # If duplicate columns existed, force single column
+    if isinstance(df["Studio"], pd.DataFrame):
+        df["Studio"] = df["Studio"].iloc[:, 0]
+
     df["Studio"] = df["Studio"].astype(str)
     df["Studio"] = df["Studio"].str.replace(r"([a-z])([A-Z])", r"\1, \2", regex=True)
+
 else:
     df["Studio"] = None
 
