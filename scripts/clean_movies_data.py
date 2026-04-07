@@ -8,13 +8,7 @@ import os
 df = pd.read_csv("data/raw/movies_wikipedia_2025_hindi.csv")
 
 # -----------------------------
-# 🔥 STEP 1: BASIC CLEANING
-# -----------------------------
-if "Title" in df.columns:
-    df = df[df["Title"].notna()]
-
-# -----------------------------
-# 🔥 STEP 2: STANDARDIZE COLUMN NAMES
+# 🔥 STEP 1: STANDARDIZE COLUMN NAMES
 # -----------------------------
 df.columns = [col.strip() for col in df.columns]
 
@@ -27,17 +21,14 @@ for col in df.columns:
     if "title" in col_lower:
         column_map[col] = "Name"
 
-    elif "production" in col_lower or "studio" in col_lower:
-        column_map[col] = "Studio"
-
-    elif "gross" in col_lower or "collection" in col_lower:
-        column_map[col] = "Revenue"
-
     elif "director" in col_lower:
         column_map[col] = "Director"
 
     elif "cast" in col_lower:
         column_map[col] = "Cast"
+
+    elif "studio" in col_lower or "production" in col_lower:
+        column_map[col] = "Studio"
 
 # Apply rename
 df = df.rename(columns=column_map)
@@ -45,22 +36,22 @@ df = df.rename(columns=column_map)
 print("Columns after rename:", df.columns.tolist())
 
 # -----------------------------
-# 🔥 STEP 3: REMOVE DUPLICATE COLUMNS (CRITICAL FIX)
+# 🔥 STEP 2: REMOVE DUPLICATE COLUMNS
 # -----------------------------
 df = df.loc[:, ~df.columns.duplicated()]
 
 # -----------------------------
-# 🔥 STEP 4: REMOVE JUNK ROWS
+# 🔥 STEP 3: REMOVE JUNK ROWS
 # -----------------------------
 df = df[df["Name"].notna()]
 df = df[~df["Name"].str.contains("Implied|multilingual", na=False)]
 
-# Remove top grossing rows
+# Keep only rows where Director exists (removes wrong table rows)
 if "Director" in df.columns:
     df = df[df["Director"].notna()]
 
 # -----------------------------
-# 🔥 STEP 5: CLEAN MOVIE NAMES
+# 🔥 STEP 4: CLEAN MOVIE NAMES
 # -----------------------------
 def clean_text(text):
     if pd.isna(text):
@@ -80,36 +71,15 @@ def clean_text(text):
 df["Name"] = df["Name"].apply(clean_text)
 
 # -----------------------------
-# 🔥 STEP 6: CLEAN REVENUE
+# 🔥 STEP 5: CLEAN DIRECTOR
 # -----------------------------
-def clean_money(value):
-    if pd.isna(value):
-        return None
-
-    value = str(value)
-
-    # Remove ₹ and commas
-    value = value.replace("₹", "").replace(",", "")
-
-    num = re.findall(r"\d+\.?\d*", value)
-
-    if not num:
-        return None
-
-    num = float(num[0])
-
-    if "crore" in value.lower():
-        return num * 10000000
-
-    return num
-
-if "Revenue" in df.columns:
-    df["Revenue"] = df["Revenue"].apply(clean_money)
+if "Director" in df.columns:
+    df["Director"] = df["Director"].str.split(",").str[0]
 else:
-    df["Revenue"] = None
+    df["Director"] = None
 
 # -----------------------------
-# 🔥 STEP 7: CLEAN CAST (TOP 3)
+# 🔥 STEP 6: CLEAN CAST (TOP 3)
 # -----------------------------
 def split_cast(cast):
     if pd.isna(cast):
@@ -129,47 +99,13 @@ else:
     df["Cast_1"] = df["Cast_2"] = df["Cast_3"] = None
 
 # -----------------------------
-# 🔥 STEP 8: CLEAN DIRECTOR
+# 🔥 STEP 7: HANDLE STUDIO (TEMPORARY)
 # -----------------------------
-if "Director" in df.columns:
-    df["Director"] = df["Director"].str.split(",").str[0]
-else:
-    df["Director"] = None
+# Studio is not reliably mapped → keep empty for now
+df["Studio"] = None
 
 # -----------------------------
-# 🔥 STEP 9: CLEAN STUDIO
-# -----------------------------
-if "Studio" in df.columns:
-
-    # If duplicate columns existed, force single column
-    if isinstance(df["Studio"], pd.DataFrame):
-        df["Studio"] = df["Studio"].iloc[:, 0]
-
-    df["Studio"] = df["Studio"].astype(str)
-    df["Studio"] = df["Studio"].str.replace(r"([a-z])([A-Z])", r"\1, \2", regex=True)
-
-else:
-    df["Studio"] = None
-
-# -----------------------------
-# 🔥 STEP 10: ADD MISSING COLUMNS
-# -----------------------------
-df["Budget"] = None
-df["Verdict"] = None
-df["IMDb_Rating"] = None
-df["Genre_1"] = None
-df["Genre_2"] = None
-df["Certificate"] = None
-
-# Ensure Year & Language exist
-if "Year" not in df.columns:
-    df["Year"] = 2025
-
-if "Language" not in df.columns:
-    df["Language"] = "hindi"
-
-# -----------------------------
-# 🔥 STEP 11: FINAL STRUCTURE
+# 🔥 STEP 8: FINAL COLUMNS
 # -----------------------------
 final_columns = [
     "Year",
@@ -179,20 +115,20 @@ final_columns = [
     "Cast_2",
     "Cast_3",
     "Studio",
-    "Budget",
-    "Revenue",
-    "Verdict",
-    "IMDb_Rating",
-    "Genre_1",
-    "Genre_2",
-    "Certificate",
     "Language"
 ]
+
+# Ensure Year & Language exist
+if "Year" not in df.columns:
+    df["Year"] = 2025
+
+if "Language" not in df.columns:
+    df["Language"] = "hindi"
 
 final_df = df[final_columns]
 
 # -----------------------------
-# 🔥 STEP 12: SAVE FILE
+# 🔥 STEP 9: SAVE FILE
 # -----------------------------
 os.makedirs("data/processed", exist_ok=True)
 
