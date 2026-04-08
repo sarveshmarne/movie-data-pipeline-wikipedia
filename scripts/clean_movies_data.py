@@ -12,7 +12,6 @@ df = pd.read_csv("data/raw/movies_wikipedia_2025_hindi.csv")
 # -----------------------------
 df.columns = [col.strip() for col in df.columns]
 
-# Dynamic column mapping
 column_map = {}
 
 for col in df.columns:
@@ -26,9 +25,6 @@ for col in df.columns:
 
     elif "cast" in col_lower:
         column_map[col] = "Cast"
-
-    elif "studio" in col_lower or "production" in col_lower:
-        column_map[col] = "Studio"
 
 # Apply rename
 df = df.rename(columns=column_map)
@@ -46,7 +42,7 @@ df = df.loc[:, ~df.columns.duplicated()]
 df = df[df["Name"].notna()]
 df = df[~df["Name"].str.contains("Implied|multilingual", na=False)]
 
-# Keep only rows where Director exists (removes wrong table rows)
+# Keep only correct movie rows
 if "Director" in df.columns:
     df = df[df["Director"].notna()]
 
@@ -99,25 +95,8 @@ else:
     df["Cast_1"] = df["Cast_2"] = df["Cast_3"] = None
 
 # -----------------------------
-# 🔥 STEP 7: HANDLE STUDIO (TEMPORARY)
+# 🔥 STEP 7: FINAL COLUMNS
 # -----------------------------
-# Studio is not reliably mapped → keep empty for now
-df["Studio"] = None
-
-# -----------------------------
-# 🔥 STEP 8: FINAL COLUMNS
-# -----------------------------
-final_columns = [
-    "Year",
-    "Name",
-    "Director",
-    "Cast_1",
-    "Cast_2",
-    "Cast_3",
-    "Studio",
-    "Language"
-]
-
 # Ensure Year & Language exist
 if "Year" not in df.columns:
     df["Year"] = 2025
@@ -125,10 +104,20 @@ if "Year" not in df.columns:
 if "Language" not in df.columns:
     df["Language"] = "hindi"
 
+final_columns = [
+    "Year",
+    "Name",
+    "Director",
+    "Cast_1",
+    "Cast_2",
+    "Cast_3",
+    "Language"
+]
+
 final_df = df[final_columns]
 
 # -----------------------------
-# 🔥 STEP 9: SAVE FILE
+# 🔥 STEP 8: SAVE FILE
 # -----------------------------
 os.makedirs("data/processed", exist_ok=True)
 
