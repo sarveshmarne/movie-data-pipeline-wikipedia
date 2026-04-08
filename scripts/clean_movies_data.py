@@ -40,7 +40,9 @@ df = df.loc[:, ~df.columns.duplicated()]
 # 🔥 STEP 3: REMOVE JUNK ROWS
 # -----------------------------
 df = df[df["Name"].notna()]
-df = df[~df["Name"].str.contains("Implied|multilingual", na=False)]
+
+# ✅ Updated (case-insensitive)
+df = df[~df["Name"].str.contains("Implied|multilingual", case=False, na=False)]
 
 # Keep only correct movie rows
 if "Director" in df.columns:
@@ -75,13 +77,20 @@ else:
     df["Director"] = None
 
 # -----------------------------
-# 🔥 STEP 6: CLEAN CAST (TOP 3)
+# 🔥 STEP 6: CLEAN CAST (IMPROVED)
 # -----------------------------
 def split_cast(cast):
     if pd.isna(cast):
         return pd.Series([None, None, None])
 
-    cast_list = [c.strip() for c in str(cast).split(",")]
+    cast = str(cast)
+
+    # Try comma split first
+    if "," in cast:
+        cast_list = [c.strip() for c in cast.split(",")]
+    else:
+        # fallback split by space
+        cast_list = cast.split()
 
     return pd.Series([
         cast_list[0] if len(cast_list) > 0 else None,
@@ -117,7 +126,18 @@ final_columns = [
 final_df = df[final_columns]
 
 # -----------------------------
-# 🔥 STEP 8: SAVE FILE
+# 🔥 STEP 8: REMOVE DUPLICATES
+# -----------------------------
+final_df = final_df.drop_duplicates()
+
+# -----------------------------
+# 🔥 STEP 9: DEBUG CHECK
+# -----------------------------
+print("Final shape:", final_df.shape)
+print(final_df.head())
+
+# -----------------------------
+# 🔥 STEP 10: SAVE FILE
 # -----------------------------
 os.makedirs("data/processed", exist_ok=True)
 
