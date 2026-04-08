@@ -18,47 +18,31 @@ all_movies = []
 
 for table in tables:
 
-    # -----------------------------
-    # 🔥 GET HEADERS
-    # -----------------------------
-    header_cells = table.find_all("th")
-    headers_text = [th.get_text(strip=True).lower() for th in header_cells]
+    header_text = table.get_text().lower()
 
-    # Skip irrelevant tables
-    if not ("director" in " ".join(headers_text) and "cast" in " ".join(headers_text)):
+    # ✅ Only pick correct table (filter)
+    if "director" not in header_text or "cast" not in header_text:
         continue
-
-    # -----------------------------
-    # 🔥 MAP COLUMN INDEXES
-    # -----------------------------
-    col_index = {}
-
-    for i, h in enumerate(headers_text):
-        if "title" in h:
-            col_index["Name"] = i
-        elif "director" in h:
-            col_index["Director"] = i
-        elif "cast" in h:
-            col_index["Cast"] = i
-        elif "studio" in h or "production" in h:
-            col_index["Studio"] = i
 
     rows = table.find_all("tr")
 
     for row in rows[1:]:
         cols = row.find_all("td")
 
-        if len(cols) < 3:
+        if len(cols) < 4:
             continue
 
         try:
-            name = cols[col_index["Name"]].get_text(strip=True)
-            director = cols[col_index["Director"]].get_text(separator=", ").strip()
-            cast = cols[col_index["Cast"]].get_text(separator=", ").strip()
+            name = cols[0].get_text(strip=True)
 
+            # 👇 Based on 2025 structure
+            director = cols[1].get_text(separator=", ").strip()
+            cast = cols[2].get_text(separator=", ").strip()
+
+            # Studio may or may not exist
             studio = None
-            if "Studio" in col_index:
-                studio = cols[col_index["Studio"]].get_text(separator=", ").strip()
+            if len(cols) >= 4:
+                studio = cols[3].get_text(separator=", ").strip()
 
             all_movies.append({
                 "Year": 2025,
@@ -73,7 +57,7 @@ for table in tables:
             continue
 
 # -----------------------------
-# 🔥 SAVE DATA
+# SAVE FILE
 # -----------------------------
 df = pd.DataFrame(all_movies)
 
@@ -81,6 +65,6 @@ os.makedirs("data/raw", exist_ok=True)
 
 df.to_csv("data/raw/movies_wikipedia_2025_hindi_clean.csv", index=False)
 
-print("✅ Clean raw data saved!")
+print("✅ Data saved!")
 print("Shape:", df.shape)
 print(df.head())
