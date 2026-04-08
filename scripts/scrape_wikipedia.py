@@ -1,67 +1,90 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+import os
 
+# -----------------------------
 # 🔹 CONFIG
-YEAR = 2025
-LANGUAGE = "hindi"
+# -----------------------------
+url = "https://en.wikipedia.org/wiki/List_of_Hindi_films_of_2025"
 
-URL = f"https://en.wikipedia.org/wiki/List_of_Hindi_films_of_{YEAR}"
-
-HEADERS = {
+headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
-def scrape_wikipedia():
-    print(f"Processing {LANGUAGE.upper()} movies for {YEAR}...")
+# -----------------------------
+# 🔹 FETCH PAGE
+# -----------------------------
+response = requests.get(url, headers=headers)
 
-    try:
-        response = requests.get(URL, headers=HEADERS)
+if response.status_code != 200:
+    print("Failed to fetch page")
+    exit()
 
-        if response.status_code != 200:
-            print("❌ Failed to fetch data")
-            return
+soup = BeautifulSoup(response.text, "html.parser")
 
-        # 🔥 Read ALL tables directly
-        tables = pd.read_html(response.text)
+# -----------------------------
+# 🔥 FIND ALL TABLES
+# -----------------------------
+tables = soup.find_all("table", {"class": "wikitable"})
 
-        valid_tables = []
+all_movies = []
 
-        for table in tables:
+# -----------------------------
+# 🔥 LOOP THROUGH TABLES
+# -----------------------------
+for table in tables:
 
-            # ✅ Keep ONLY tables with 'Title' column
-            if "Title" in table.columns:
+    headers_row = table.find_all("th")
+    header_texts = [th.get_text(strip=True).lower() for th in headers_row]
 
-                # ❌ Skip top grossing table
-                if "Rank" in table.columns:
-                    continue
+    # ✅ ONLY pick movie detail tables
+    if not ("director" in " ".join(header_texts) and "cast" in " ".join(header_texts)):
+        continue
 
-                # Add metadata
-                table["Year"] = YEAR
-                table["Language"] = LANGUAGE
+    rows = table.find_all("tr")
 
-                valid_tables.append(table)
+    for row in rows[1:]:  # skip header
+        cols = row.find_all("td")
 
-        if not valid_tables:
-            print("⚠️ No valid movie tables found")
-            return
+        if len(cols) < 3:
+            continue
 
-        # 🔥 Combine all valid tables
-        final_df = pd.concat(valid_tables, ignore_index=True)
+        try:
+            # -----------------------------
+            # 🔥 EXTRACT DATA
+            # -----------------------------
+            title = cols[0].get_text(strip=True)
 
-        # 🔥 Save RAW data
-        import os
-        os.makedirs("data/raw", exist_ok=True)
+            # Some tables shift columns → adjust carefully
+            director = cols[-3].get_text(separator=", ").strip()
+            cast = cols[-2].get_text(separator=", ").strip()
+            studio = cols[-1].get_text(separator=", ").strip()
 
-        file_path = f"data/raw/movies_wikipedia_{YEAR}_{LANGUAGE}.csv"
-        final_df.to_csv(file_path, index=False)
+            all_movies.append({
+                "Year": 2025,
+                "Name": title,
+                "Director": director,
+                "Cast": cast,
+                "Studio": studio,
+                "Language": "hindi"
+            })
 
-        print(f"✅ Raw data saved at: {file_path}")
+        except Exception as e:
+            continue
 
-    except Exception as e:
-        print(f"❌ Error: {e}")
+# -----------------------------
+# 🔥 CREATE DATAFRAME
+# -----------------------------
+df = pd.DataFrame(all_movies)
 
+# -----------------------------
+# 🔥 SAVE RAW DATA
+# -----------------------------
+os.makedirs("data/raw", exist_ok=True)
 
-# 🔹 RUN
-if __name__ == "__main__":
-    scrape_wikipedia()
+df.to_csv("data/raw/movies_wikipedia_2025_hindi_clean.csv", index=False)
+
+print("✅ Clean raw data saved!")
+print("Shape:", df.shape)
+print(df.head())

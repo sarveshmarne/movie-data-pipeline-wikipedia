@@ -40,6 +40,8 @@ df = df.loc[:, ~df.columns.duplicated()]
 # 🔥 STEP 3: REMOVE JUNK ROWS
 # -----------------------------
 df = df[df["Name"].notna()]
+
+# ✅ Updated (case-insensitive)
 df = df[~df["Name"].str.contains("Implied|multilingual", case=False, na=False)]
 
 # Keep only correct movie rows
@@ -67,33 +69,15 @@ def clean_text(text):
 df["Name"] = df["Name"].apply(clean_text)
 
 # -----------------------------
-# 🔥 STEP 5: FIX MERGED NAMES (IMPORTANT)
-# -----------------------------
-def fix_names(text):
-    if pd.isna(text):
-        return text
-    
-    # Add space before capital letters (fix merged names)
-    return re.sub(r'(?<!^)(?=[A-Z])', ' ', str(text))
-
-if "Director" in df.columns:
-    df["Director"] = df["Director"].apply(fix_names)
-else:
-    df["Director"] = None
-
-if "Cast" in df.columns:
-    df["Cast"] = df["Cast"].apply(fix_names)
-else:
-    df["Cast"] = None
-
-# -----------------------------
-# 🔥 STEP 6: CLEAN DIRECTOR
+# 🔥 STEP 5: CLEAN DIRECTOR
 # -----------------------------
 if "Director" in df.columns:
     df["Director"] = df["Director"].str.split(",").str[0]
+else:
+    df["Director"] = None
 
 # -----------------------------
-# 🔥 STEP 7: CLEAN CAST (TOP 3)
+# 🔥 STEP 6: CLEAN CAST (IMPROVED)
 # -----------------------------
 def split_cast(cast):
     if pd.isna(cast):
@@ -120,8 +104,9 @@ else:
     df["Cast_1"] = df["Cast_2"] = df["Cast_3"] = None
 
 # -----------------------------
-# 🔥 STEP 8: FINAL COLUMNS
+# 🔥 STEP 7: FINAL COLUMNS
 # -----------------------------
+# Ensure Year & Language exist
 if "Year" not in df.columns:
     df["Year"] = 2025
 
@@ -141,18 +126,18 @@ final_columns = [
 final_df = df[final_columns]
 
 # -----------------------------
-# 🔥 STEP 9: REMOVE DUPLICATES
+# 🔥 STEP 8: REMOVE DUPLICATES
 # -----------------------------
 final_df = final_df.drop_duplicates()
 
 # -----------------------------
-# 🔥 STEP 10: DEBUG CHECK
+# 🔥 STEP 9: DEBUG CHECK
 # -----------------------------
 print("Final shape:", final_df.shape)
 print(final_df.head())
 
 # -----------------------------
-# 🔥 STEP 11: SAVE FILE
+# 🔥 STEP 10: SAVE FILE
 # -----------------------------
 os.makedirs("data/processed", exist_ok=True)
 
