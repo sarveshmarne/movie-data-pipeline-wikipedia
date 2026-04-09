@@ -29,8 +29,8 @@ for table in tables:
 
     header_text = table.get_text().lower()
 
-    # ✅ Only select correct tables
-    if "director" not in header_text or "cast" not in header_text:
+    # ✅ only ensure it's a movie table
+    if "title" not in header_text:
         continue
 
     rows = table.find_all("tr")
@@ -56,12 +56,10 @@ for table in tables:
             # -----------------------------
             # 🔥 EXTRACT CLEAN DATA
             # -----------------------------
-            director = cols[1].get_text(separator=", ").strip()
-            cast = cols[2].get_text(separator=", ").strip()
+            director = cols[1].get_text(separator=", ").strip() if len(cols) > 1 else None
+            cast = cols[2].get_text(separator=", ").strip() if len(cols) > 2 else None
 
-            studio = None
-            if len(cols) >= 4:
-                studio = cols[3].get_text(separator=", ").strip()
+            studio = cols[3].get_text(separator=", ").strip() if len(cols) > 3 else None
 
             all_movies.append({
                 "Year": 2025,
