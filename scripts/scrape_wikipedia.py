@@ -1,64 +1,50 @@
 import pandas as pd
-import re
+import requests
+from bs4 import BeautifulSoup
 import os
 
-df = pd.read_csv("data/raw/movies_wikipedia_2025_full_dump.csv")
+url = "https://en.wikipedia.org/wiki/List_of_Hindi_films_of_2025"
 
-# STEP 1: Remove top junk
-df = df.iloc[13:].reset_index(drop=True)
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
 
-# STEP 2: Remove empty rows
-df = df.dropna(how="all")
+response = requests.get(url, headers=headers)
+soup = BeautifulSoup(response.text, "html.parser")
 
-# STEP 3: Rename columns (adjust if needed)
-df.columns = ["Col1", "Name", "Col3", "Director", "Cast", "Studio"]
+tables = soup.find_all("table", {"class": "wikitable"})
 
-# STEP 4: Remove non-movie rows
-df = df[df["Name"].notna()]
-df = df[~df["Name"].str.contains("JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC", case=False, na=False)]
-df = df[~df["Name"].str.isdigit()]
+all_rows = []
 
-# STEP 5: Clean text
-def clean_text(text):
-    if pd.isna(text):
-        return text
-    text = re.sub(r"\[.*?\]", "", str(text))
-    return text.strip()
+for table in tables:
+    rows = table.find_all("tr")
 
-df["Name"] = df["Name"].apply(clean_text)
-df["Director"] = df["Director"].apply(clean_text)
-df["Cast"] = df["Cast"].apply(clean_text)
+    for row in rows:
+        cols = row.find_all(["td", "th"])
 
-# STEP 6: Split cast
-def split_cast(cast):
-    if pd.isna(cast):
-        return pd.Series([None, None, None])
-    cast_list = [c.strip() for c in cast.split(",")]
-    return pd.Series([
-        cast_list[0] if len(cast_list) > 0 else None,
-        cast_list[1] if len(cast_list) > 1 else None,
-        cast_list[2] if len(cast_list) > 2 else None
-    ])
+        if not cols:
+            continue
 
-df[["Cast_1", "Cast_2", "Cast_3"]] = df["Cast"].apply(split_cast)
+        row_data = []
 
-# STEP 7: Final columns
-df["Year"] = 2025
-df["Language"] = "hindi"
+        for col in cols:
+            text = col.get_text(separator=", ").strip()
+            row_data.append(text)
 
-final_df = df[[
-    "Year",
-    "Name",
-    "Director",
-    "Cast_1",
-    "Cast_2",
-    "Cast_3",
-    "Studio",
-    "Language"
-]]
+        all_rows.append(row_data)
 
-# STEP 8: Save
-os.makedirs("data/processed", exist_ok=True)
-final_df.to_csv("data/processed/movies_cleaned_2025_hindi.csv", index=False)
+# -----------------------------
+# 🔥 CONVERT TO DATAFRAME
+# -----------------------------
+df = pd.DataFrame(all_rows)
 
-print("✅ Cleaned data saved!")
+# -----------------------------
+# 🔥 SAVE RAW DATA (FULL DUMP)
+# -----------------------------
+os.makedirs("data/raw", exist_ok=True)
+
+df.to_csv("data/raw/movies_wikipedia_2025_full_dump.csv", index=False)
+
+print("✅ Full raw dump saved!")
+print("Shape:", df.shape)
+print(df.head(10))

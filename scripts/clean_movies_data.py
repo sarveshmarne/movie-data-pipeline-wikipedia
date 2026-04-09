@@ -2,145 +2,63 @@ import pandas as pd
 import re
 import os
 
-# -----------------------------
-# 🔹 LOAD RAW DATA
-# -----------------------------
-df = pd.read_csv("data/raw/movies_wikipedia_2025_hindi.csv")
+df = pd.read_csv("data/raw/movies_wikipedia_2025_full_dump.csv")
 
-# -----------------------------
-# 🔥 STEP 1: STANDARDIZE COLUMN NAMES
-# -----------------------------
-df.columns = [col.strip() for col in df.columns]
+# STEP 1: Remove top junk
+df = df.iloc[13:].reset_index(drop=True)
 
-column_map = {}
+# STEP 2: Remove empty rows
+df = df.dropna(how="all")
 
-for col in df.columns:
-    col_lower = col.lower()
+# STEP 3: Rename columns (adjust if needed)
+df.columns = ["Col1", "Name", "Col3", "Director", "Cast", "Studio"]
 
-    if "title" in col_lower:
-        column_map[col] = "Name"
-
-    elif "director" in col_lower:
-        column_map[col] = "Director"
-
-    elif "cast" in col_lower:
-        column_map[col] = "Cast"
-
-# Apply rename
-df = df.rename(columns=column_map)
-
-print("Columns after rename:", df.columns.tolist())
-
-# -----------------------------
-# 🔥 STEP 2: REMOVE DUPLICATE COLUMNS
-# -----------------------------
-df = df.loc[:, ~df.columns.duplicated()]
-
-# -----------------------------
-# 🔥 STEP 3: REMOVE JUNK ROWS
-# -----------------------------
+# STEP 4: Remove non-movie rows
 df = df[df["Name"].notna()]
+df = df[~df["Name"].str.contains("JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC", case=False, na=False)]
+df = df[~df["Name"].str.isdigit()]
 
-# ✅ Updated (case-insensitive)
-df = df[~df["Name"].str.contains("Implied|multilingual", case=False, na=False)]
-
-# Keep only correct movie rows
-if "Director" in df.columns:
-    df = df[df["Director"].notna()]
-
-# -----------------------------
-# 🔥 STEP 4: CLEAN MOVIE NAMES
-# -----------------------------
+# STEP 5: Clean text
 def clean_text(text):
     if pd.isna(text):
         return text
-
-    text = str(text)
-
-    # Remove [Î±], [1], etc.
-    text = re.sub(r"\[.*?\]", "", text)
-
-    # Fix encoding issues
-    text = text.replace("â€“", "-")
-    text = text.replace("–", "-")
-
+    text = re.sub(r"\[.*?\]", "", str(text))
     return text.strip()
 
 df["Name"] = df["Name"].apply(clean_text)
+df["Director"] = df["Director"].apply(clean_text)
+df["Cast"] = df["Cast"].apply(clean_text)
 
-# -----------------------------
-# 🔥 STEP 5: CLEAN DIRECTOR
-# -----------------------------
-if "Director" in df.columns:
-    df["Director"] = df["Director"].str.split(",").str[0]
-else:
-    df["Director"] = None
-
-# -----------------------------
-# 🔥 STEP 6: CLEAN CAST (IMPROVED)
-# -----------------------------
+# STEP 6: Split cast
 def split_cast(cast):
     if pd.isna(cast):
         return pd.Series([None, None, None])
-
-    cast = str(cast)
-
-    # Try comma split first
-    if "," in cast:
-        cast_list = [c.strip() for c in cast.split(",")]
-    else:
-        # fallback split by space
-        cast_list = cast.split()
-
+    cast_list = [c.strip() for c in cast.split(",")]
     return pd.Series([
         cast_list[0] if len(cast_list) > 0 else None,
         cast_list[1] if len(cast_list) > 1 else None,
         cast_list[2] if len(cast_list) > 2 else None
     ])
 
-if "Cast" in df.columns:
-    df[["Cast_1", "Cast_2", "Cast_3"]] = df["Cast"].apply(split_cast)
-else:
-    df["Cast_1"] = df["Cast_2"] = df["Cast_3"] = None
+df[["Cast_1", "Cast_2", "Cast_3"]] = df["Cast"].apply(split_cast)
 
-# -----------------------------
-# 🔥 STEP 7: FINAL COLUMNS
-# -----------------------------
-# Ensure Year & Language exist
-if "Year" not in df.columns:
-    df["Year"] = 2025
+# STEP 7: Final columns
+df["Year"] = 2025
+df["Language"] = "hindi"
 
-if "Language" not in df.columns:
-    df["Language"] = "hindi"
-
-final_columns = [
+final_df = df[[
     "Year",
     "Name",
     "Director",
     "Cast_1",
     "Cast_2",
     "Cast_3",
+    "Studio",
     "Language"
-]
+]]
 
-final_df = df[final_columns]
-
-# -----------------------------
-# 🔥 STEP 8: REMOVE DUPLICATES
-# -----------------------------
-final_df = final_df.drop_duplicates()
-
-# -----------------------------
-# 🔥 STEP 9: DEBUG CHECK
-# -----------------------------
-print("Final shape:", final_df.shape)
-print(final_df.head())
-
-# -----------------------------
-# 🔥 STEP 10: SAVE FILE
-# -----------------------------
+# STEP 8: Save
 os.makedirs("data/processed", exist_ok=True)
-
 final_df.to_csv("data/processed/movies_cleaned_2025_hindi.csv", index=False)
 
-print("✅ Cleaned data saved successfully!")
+print("✅ Cleaned data saved!")
