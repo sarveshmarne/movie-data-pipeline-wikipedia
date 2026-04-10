@@ -1,24 +1,36 @@
-# 🎬 Movie Data Pipeline (Wikipedia)
+# 🎬 Movie Data Analytics Pipeline
 
-This project builds an automated data pipeline to collect and clean movie data from Wikipedia (1900–2025).
+End-to-end pipeline for collecting, cleaning, **enriching**, and analyzing Hindi movie data (2025).
 
 ## 🚀 Features
-- Scrapes movie data year-wise using BeautifulSoup
-- Handles inconsistent table structures across years
-- Combines multi-year datasets into one unified dataset
-- Cleans and standardizes columns (Title, Cast, Distributor, etc.)
-- Prepares data for analytics and visualization
+✅ Scrapes Wikipedia (BeautifulSoup)  
+✅ Cleans & structures data (Pandas)  
+✅ **Enriches with TMDb API** (IMDb ratings, genres, budget, studio)  
+✅ Full pipeline (`main_pipeline.py`)  
+📊 Ready for SQL/Power BI analysis  
+
+## 📁 Data Flow
+```
+Wikipedia → raw → processed (133 movies) → enriched → SQL → Dashboard
+```
 
 ## 🛠 Tech Stack
-- Python
-- Pandas
-- BeautifulSoup
-- Requests
+- Python, Pandas, BeautifulSoup, Requests
+- TMDb API integration
+- Fuzzy matching for name resolution
 
-## 📊 Output
-- Raw dataset (all columns)
-- Cleaned dataset (analysis-ready)
+## 🔑 Setup
+1. `pip install -r requirements.txt`
+2. Copy `.env.example` → `.env`, add `TMDb_API_KEY`
+3. `python main_pipeline.py`
 
-## 📌 Future Improvements
-- Add Genre & IMDb rating using API
-- Build dashboard (Power BI / Excel)
+## 📊 Sample Data (processed)
+| Year | Name     | Director     | Cast_1       |
+|------|----------|--------------|--------------|
+| 2025 | Fateh    | Sonu Sood... |              |
+| 2025 | Chhaava  | Laxman Utekar| Vicky Kaushal|
+
+**Next:** Database (SQL), Visualization (Power BI), ML predictions
+
+See `TODO.md` for progress.
+
