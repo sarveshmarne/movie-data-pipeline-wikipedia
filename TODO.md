@@ -14,8 +14,8 @@ Current Plan: Implement Data Enrichment using TMDb API
 - [ ] Create config.py or .env for TMDb API key
 
 ### 3. **Generate Base Data** ✅
-- ✅ Run `python scripts/scrape_wikipedia.py` 
-- ✅ Run `python scripts/clean_movies_data.py` (133 movies processed)
+- ✅ Scrape & clean fixed (monthly parsing + validation filters)
+- ✅ 132 high-quality 2025 Hindi movies ready (misplaced data fixed!)"
 
 ### 4. **Implement Enrichment Script** ✅
 - ✅ Create `scripts/enrich_movies.py`
@@ -42,4 +42,3 @@ Current Plan: Implement Data Enrichment using TMDb API
 3. Proceed to SQL + Viz stages
 
 Progress will be updated as steps complete.
-

@@ -11,7 +11,11 @@ load_dotenv()
 
 API_KEY = os.getenv('TMDb_API_KEY')
 if not API_KEY:
-    raise ValueError("TMDb_API_KEY not found in .env file. Copy .env.example to .env and add your key.")
+    print("⚠️ No TMDb_API_KEY found. Skipping enrichment (add to .env for full features).")
+    df_enriched = pd.read_csv("data/processed/movies_cleaned_2025_hindi.csv")
+    df_enriched.to_csv("data/enriched/movies_enriched_2025_hindi.csv", index=False)
+    print("✅ Demo enrichment complete (base data copied). Add API key for TMDb data!")
+    exit()
 
 BASE_URL = "https://api.themoviedb.org/3"
 SEARCH_URL = f"{BASE_URL}/search/movie"
