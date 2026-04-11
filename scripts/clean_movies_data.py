@@ -9,7 +9,10 @@ def clean_text(text):
     text = str(text).strip()
     text = re.sub(r"\[.*?\]", "", text)
     text = re.sub(r"^\d+\s*,?\s*", "", text)  # Remove leading numbers + comma
-    text = re.sub(r",?\s*[\[\]]", "", text)
+    text = re.sub(r",?\s*\(α\)", "", text)
+    text = re.sub(r"[\[\]]", "", text)
+    text = re.sub(r"[,;]+", ", ", text)
+    text = re.sub(r"\s+", " ", text)
     return text.strip() if text.strip() else np.nan
 
 df = pd.read_csv("data/raw/movies_wikipedia_2025_full_dump.csv")
@@ -38,14 +41,21 @@ print("Monthly head:\n", df_monthly.head(10))
 
 # Filter valid movie rows: Name col (idx1) looks like movie title
 def is_valid_movie_row(row):
-    name = str(row.iloc[1]).strip(', ')
-    if pd.isna(row.iloc[1]) or len(name) < 3 or name.isdigit() or name == 'Title':
+    name_raw = row.iloc[1]
+    if pd.isna(name_raw):
+        return False
+    name = str(name_raw).strip(', ')
+    if len(name) < 3 or name.isdigit() or name == 'Title' or name == 'Ref.':
         return False
     if re.search(r'^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)', name, re.I):
         return False
-    # Must have director or cast (not all empty)
-    dir_cast = pd.notna(row.iloc[2]) or pd.notna(row.iloc[3])
-    return dir_cast
+    # Skip if name is just number like "3," "10," "17,"
+    if re.match(r'^\d+[\,\s]*$', name):
+        return False
+    # Must have director or cast content
+    dir_content = pd.notna(row.iloc[2]) and str(row.iloc[2]).strip()
+    cast_content = pd.notna(row.iloc[3]) and str(row.iloc[3]).strip()
+    return bool(dir_content or cast_content)
 
 df_clean = df_monthly[df_monthly.apply(is_valid_movie_row, axis=1)].reset_index(drop=True)
 
