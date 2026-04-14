@@ -119,7 +119,7 @@ def enrich_dataframe(df):
 
 if __name__ == "__main__":
     # Load cleaned data
-    df = pd.read_csv("data/processed/movies_cleaned_2025_hindi.csv")
+df = pd.read_json("data/processed/movies_cleaned_2025_hindi.json")
     print(f"Loaded {len(df)} movies for enrichment")
     
     # Enrich
