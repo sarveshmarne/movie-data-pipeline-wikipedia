@@ -15,7 +15,7 @@ def clean_text(text):
     text = re.sub(r"\s+", " ", text)
     return text.strip() if text.strip() else np.nan
 
-df = pd.read_csv("data/raw/movies_wikipedia_2025_full_dump.csv")
+df = pd.read_json("data/raw/movies_wikipedia_2025_full_dump.json", lines=True)
 
 print("Raw shape:", df.shape)
 print("Raw head:\n", df.head(20))

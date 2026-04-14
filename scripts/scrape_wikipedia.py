@@ -43,8 +43,8 @@ df = pd.DataFrame(all_rows)
 # -----------------------------
 os.makedirs("data/raw", exist_ok=True)
 
-df.to_csv("data/raw/movies_wikipedia_2025_full_dump.csv", index=False)
+df.to_json("data/raw/movies_wikipedia_2025_full_dump.json", orient='records', lines=True, date_format='iso')
 
-print("✅ Full raw dump saved!")
+print("✅ Full raw dump saved as JSON!")
 print("Shape:", df.shape)
 print(df.head(10))
