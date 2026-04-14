@@ -94,6 +94,5 @@ print("\nSample movies:")
 print(df_final[['Name', 'Director', 'Cast_1']].head(10))
 
 os.makedirs("data/processed", exist_ok=True)
-df_final.to_csv("data/processed/movies_cleaned_2025_hindi.csv", index=False)
-print("\n✅ Super clean data saved! High quality 2025 Hindi movies dataset.")
-
+df_final.to_json("data/processed/movies_cleaned_2025_hindi.json", orient='records', indent=2)
+print("\n✅ Super clean data saved as JSON! High quality 2025 Hindi movies dataset.")
