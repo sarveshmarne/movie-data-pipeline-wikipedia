@@ -12,9 +12,10 @@ load_dotenv()
 API_KEY = os.getenv('TMDb_API_KEY')
 if not API_KEY:
     print("⚠️ No TMDb_API_KEY found. Skipping enrichment (add to .env for full features).")
-    df_enriched = pd.read_csv("data/processed/movies_cleaned_2025_hindi.csv")
-    df_enriched.to_csv("data/enriched/movies_enriched_2025_hindi.csv", index=False)
-    print("✅ Demo enrichment complete (base data copied). Add API key for TMDb data!")
+    os.makedirs("data/enriched", exist_ok=True)
+    df_base = pd.read_json("data/processed/movies_cleaned_2025_hindi.json")
+    df_base.to_json("data/enriched/movies_enriched_2025_hindi.json", orient='records', indent=2)
+    print("✅ Demo enrichment complete - base data copied to enriched JSON!")
     exit()
 
 BASE_URL = "https://api.themoviedb.org/3"
@@ -63,7 +64,6 @@ def get_movie_details(movie_id):
         ext_response.raise_for_status()
         ext_ids = ext_response.json()
         
-        # Credits for certification? (TMDb has release_dates endpoint but complex)
         details = {
             "tmdb_id": movie_id,
             "imdb_id": ext_ids.get('imdb_id'),
@@ -107,29 +107,25 @@ def enrich_dataframe(df):
         
         enriched_data.append(details)
         
-        # Rate limit: 40 req/sec, but sleep 0.5s safe
-        time.sleep(0.5)
-    
+        time.sleep(0.5)  # Rate limit
+        
     enriched_df = pd.DataFrame(enriched_data)
-    
-    # Merge with original
     final_df = pd.concat([df.reset_index(drop=True), enriched_df], axis=1)
-    
     return final_df
 
 if __name__ == "__main__":
     # Load cleaned data
-df = pd.read_json("data/processed/movies_cleaned_2025_hindi.json")
+    df = pd.read_json("data/processed/movies_cleaned_2025_hindi.json")
     print(f"Loaded {len(df)} movies for enrichment")
     
     # Enrich
     enriched_df = enrich_dataframe(df)
     
-    # Save
+    # Save as JSON
     os.makedirs("data/enriched", exist_ok=True)
-    enriched_df.to_csv("data/enriched/movies_enriched_2025_hindi.csv", index=False)
+    enriched_df.to_json("data/enriched/movies_enriched_2025_hindi.json", orient='records', indent=2)
     
-    print("✅ Enrichment complete!")
-    print("New columns added: tmdb_id, imdb_id, imdb_rating, genres, budget, etc.")
+    print("✅ Enrichment complete as JSON!")
+    print("New columns: tmdb_id, imdb_id, imdb_rating, genres, budget...")
     print(enriched_df[['Name', 'imdb_rating', 'genres', 'budget']].head())
 
