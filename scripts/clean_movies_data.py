@@ -20,16 +20,20 @@ df = pd.read_json("data/raw/movies_wikipedia_2025_full_dump.json", lines=True)
 print("Raw shape:", df.shape)
 print("Raw head:\n", df.head(20))
 
-# Find monthly table starts (rows with "Title" in col1)
+# Find monthly table starts (rows with "Director" in col2)
 monthly_starts = []
 for idx in df.index:
     row = df.iloc[idx]
-    if pd.notna(row.iloc[1]) and 'Title' in str(row.iloc[1]):
+    if pd.notna(row.iloc[2]) and 'Director' in str(row.iloc[2]):
         monthly_starts.append(idx)
 
 print("Monthly table headers at rows:", monthly_starts)
 
-# Take data from first monthly table onwards (skip top grossing + headers)
+# Process top-grossing films separately (first 12 rows after header)
+df_top_grossing = df.iloc[2:12].reset_index(drop=True)  # Skip header rows
+print(f"Top-grossing data shape: {df_top_grossing.shape}")
+
+# Process monthly release films
 if monthly_starts:
     start_row = monthly_starts[0] + 1
 else:
@@ -39,7 +43,7 @@ df_monthly = df.iloc[start_row:].reset_index(drop=True)
 print(f"Monthly data shape: {df_monthly.shape}")
 print("Monthly head:\n", df_monthly.head(10))
 
-# Filter valid movie rows: Name col (idx1) looks like movie title
+# Filter valid movie rows from monthly tables only
 def is_valid_movie_row(row):
     name_raw = row.iloc[1]
     if pd.isna(name_raw):
@@ -57,18 +61,42 @@ def is_valid_movie_row(row):
     cast_content = pd.notna(row.iloc[3]) and str(row.iloc[3]).strip()
     return bool(dir_content or cast_content)
 
-df_clean = df_monthly[df_monthly.apply(is_valid_movie_row, axis=1)].reset_index(drop=True)
+df_monthly_clean = df_monthly[df_monthly.apply(is_valid_movie_row, axis=1)].reset_index(drop=True)
 
-print(f"Valid movies: {len(df_clean)}")
-print("Clean head:\n", df_clean.head())
+print(f"Valid monthly movies: {len(df_monthly_clean)}")
 
-# Extract columns: Title(1), Director(2), Cast(3), Studio(4)
-df_final = pd.DataFrame({
-    'Name': df_clean.iloc[:, 1].apply(clean_text),
-    'Director': df_clean.iloc[:, 2].apply(clean_text),
-    'Cast': df_clean.iloc[:, 3].apply(clean_text),
-    'Studio': df_clean.iloc[:, 4].apply(clean_text) if len(df_clean.columns) > 4 else np.nan
+# Process top-grossing films (different column structure)
+def process_top_grossing(row):
+    if pd.isna(row.iloc[1]) or str(row.iloc[1]).strip() == 'Title':
+        return None
+    return {
+        'Name': clean_text(row.iloc[1]),
+        'Director': np.nan,  # Not available in top-grossing table
+        'Cast': np.nan,      # Not available in top-grossing table  
+        'Studio': clean_text(row.iloc[2]),  # Production company
+        'Worldwide_Gross': clean_text(row.iloc[4])  # Box office
+    }
+
+top_grossing_movies = []
+for idx, row in df_top_grossing.iterrows():
+    movie = process_top_grossing(row)
+    if movie and movie['Name'] and not pd.isna(movie['Name']):
+        top_grossing_movies.append(movie)
+
+df_top_clean = pd.DataFrame(top_grossing_movies)
+print(f"Clean top-grossing movies: {len(df_top_clean)}")
+
+# Process monthly films (correct column mapping)
+df_monthly_final = pd.DataFrame({
+    'Name': df_monthly_clean.iloc[:, 1].apply(clean_text),
+    'Director': df_monthly_clean.iloc[:, 2].apply(clean_text),
+    'Cast': df_monthly_clean.iloc[:, 3].apply(clean_text),
+    'Studio': df_monthly_clean.iloc[:, 4].apply(clean_text) if len(df_monthly_clean.columns) > 4 else np.nan
 })
+
+# Combine both datasets
+df_final = pd.concat([df_monthly_final, df_top_clean], ignore_index=True)
+print(f"Combined movies: {len(df_final)}")
 
 # Split cast
 def split_cast(cast):
