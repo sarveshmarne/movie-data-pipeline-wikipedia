@@ -1,106 +1,6 @@
 [
   {
     "Year":2025,
-    "Name":"Dhurandhar,",
-    "Director":"Jio Studios, B62 Studios,",
-    "Cast_1":"Jio Studios",
-    "Cast_2":"PVR Inox Pictures",
-    "Cast_3":null,
-    "Studio":"\u20b91, 349.65 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Chhaava,",
-    "Director":"Maddock Films,",
-    "Cast_1":"Pen Marudhar",
-    "Cast_2":"Yash Raj Films",
-    "Cast_3":null,
-    "Studio":"\u20b9797.34 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Saiyaara,",
-    "Director":"Yash Raj Films,",
-    "Cast_1":"Yash Raj Films",
-    "Cast_2":null,
-    "Cast_3":null,
-    "Studio":"\u20b9579.23 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Mahavatar Narsimha, ,",
-    "Director":"Kleem Productions,",
-    "Cast_1":"AA Films",
-    "Cast_2":null,
-    "Cast_3":null,
-    "Studio":"\u20b9326.82 crore, , #,",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"War 2,",
-    "Director":"Yash Raj Films",
-    "Cast_1":"Yash Raj Films",
-    "Cast_2":null,
-    "Cast_3":null,
-    "Studio":"\u20b9303\u2013351 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Sitaare Zameen Par,",
-    "Director":"Aamir Khan Productions",
-    "Cast_1":"PVR Inox Pictures",
-    "Cast_2":"AA Films",
-    "Cast_3":null,
-    "Studio":"\u20b9266.49 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Raid 2,",
-    "Director":"T-Series Films, Panorama Studios,",
-    "Cast_1":"PVR Inox Pictures",
-    "Cast_2":"Panorama Studios",
-    "Cast_3":null,
-    "Studio":"\u20b9243.06 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Housefull 5,",
-    "Director":"Nadiadwala Grandson Entertainment,",
-    "Cast_1":"Pen Marudhar",
-    "Cast_2":null,
-    "Cast_3":null,
-    "Studio":"\u20b9242.80\u2013248.80 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Sikandar,",
-    "Director":"Nadiadwala Grandson Entertainment, Salman Khan Films,",
-    "Cast_1":"Pen Marudhar",
-    "Cast_2":null,
-    "Cast_3":null,
-    "Studio":"\u20b9176.18 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
-    "Name":"Thamma,",
-    "Director":"Maddock Films",
-    "Cast_1":"PVR Inox Pictures",
-    "Cast_2":"Yash Raj Films",
-    "Cast_3":null,
-    "Studio":"\u20b9169.75 crore",
-    "Language":"hindi"
-  },
-  {
-    "Year":2025,
     "Name":"Fateh",
     "Director":"Sonu Sood",
     "Cast_1":"Sonu Sood",
@@ -1317,6 +1217,106 @@
     "Cast_2":"Ananya Panday",
     "Cast_3":"Neena Gupta",
     "Studio":"Dharma Productions, , Namah Pictures",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Dhurandhar,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Jio Studios, B62 Studios,",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Chhaava,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Maddock Films,",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Saiyaara,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Yash Raj Films,",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Mahavatar Narsimha, ,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Kleem Productions,",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"War 2,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Yash Raj Films",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Sitaare Zameen Par,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Aamir Khan Productions",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Raid 2,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"T-Series Films, Panorama Studios,",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Housefull 5,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Nadiadwala Grandson Entertainment,",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Sikandar,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Nadiadwala Grandson Entertainment, Salman Khan Films,",
+    "Language":"hindi"
+  },
+  {
+    "Year":2025,
+    "Name":"Thamma,",
+    "Director":null,
+    "Cast_1":null,
+    "Cast_2":null,
+    "Cast_3":null,
+    "Studio":"Maddock Films",
     "Language":"hindi"
   }
 ]
