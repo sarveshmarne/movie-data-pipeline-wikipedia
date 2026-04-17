@@ -16,7 +16,7 @@ def clean_text(text):
     return text.strip() if text.strip() else np.nan
 
 # Load the structured data from new scraper
-df = pd.read_csv("data/raw/movies_wikipedia_2025_clean_structured.csv")
+df = pd.read_csv("data/raw/movies_wikipedia_2025_structured.csv")
 
 print("Raw structured shape:", df.shape)
 print("Raw structured head:\n", df.head(10))
@@ -43,4 +43,4 @@ print(df_clean[['Name', 'Director', 'Cast']].head(10))
 # Save cleaned data
 os.makedirs("data/processed", exist_ok=True)
 df_clean.to_json("data/processed/movies_cleaned_2025_hindi.json", orient='records', indent=2)
-print("\n✅ Clean data saved as JSON! High quality 2025 Hindi movies dataset.")
+print("\n Clean data saved as JSON!")
