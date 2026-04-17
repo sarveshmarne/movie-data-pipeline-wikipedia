@@ -14,37 +14,75 @@ soup = BeautifulSoup(response.text, "html.parser")
 
 tables = soup.find_all("table", {"class": "wikitable"})
 
-all_rows = []
+all_movies = []
 
 for table in tables:
-    rows = table.find_all("tr")
+
+    # -----------------------------
+    # Extract headers
+    # -----------------------------
+    header_row = table.find("tr")
+    headers = [th.get_text(strip=True).lower() for th in header_row.find_all("th")]
+
+    # Skip tables without title
+    if "title" not in " ".join(headers):
+        continue
+
+    # -----------------------------
+    # Map column indexes
+    # -----------------------------
+    col_map = {}
+
+    for i, h in enumerate(headers):
+        if "title" in h:
+            col_map["Name"] = i
+        elif "director" in h:
+            col_map["Director"] = i
+        elif "cast" in h:
+            col_map["Cast"] = i
+        elif "studio" in h or "production" in h:
+            col_map["Studio"] = i
+
+    rows = table.find_all("tr")[1:]
 
     for row in rows:
-        cols = row.find_all(["td", "th"])
+        cols = row.find_all("td")
 
         if not cols:
             continue
 
-        row_data = []
+        try:
+            name = cols[col_map.get("Name", -1)].get_text(strip=True) if "Name" in col_map else None
 
-        for col in cols:
-            text = col.get_text(separator=", ").strip()
-            row_data.append(text)
+            # Skip junk rows
+            if not name or name.isupper() or name.isdigit():
+                continue
 
-        all_rows.append(row_data)
+            director = cols[col_map["Director"]].get_text(separator=", ").strip() if "Director" in col_map else None
+            cast = cols[col_map["Cast"]].get_text(separator=", ").strip() if "Cast" in col_map else None
+            studio = cols[col_map["Studio"]].get_text(separator=", ").strip() if "Studio" in col_map else None
+
+            all_movies.append({
+                "Year": 2025,
+                "Name": name,
+                "Director": director,
+                "Cast": cast,
+                "Studio": studio,
+                "Language": "hindi"
+            })
+
+        except:
+            continue
 
 # -----------------------------
-# 🔥 CONVERT TO DATAFRAME
+# SAVE
 # -----------------------------
-df = pd.DataFrame(all_rows)
+df = pd.DataFrame(all_movies)
+df = df.drop_duplicates()
 
-# -----------------------------
-# 🔥 SAVE RAW DATA (FULL DUMP)
-# -----------------------------
 os.makedirs("data/raw", exist_ok=True)
+df.to_csv("data/raw/movies_wikipedia_2025_clean_structured.csv", index=False)
 
-df.to_json("data/raw/movies_wikipedia_2025_full_dump.json", orient='records', lines=True, date_format='iso')
-
-print("✅ Full raw dump saved as JSON!")
-print("Shape:", df.shape)
-print(df.head(10))
+print(" Clean structured data saved!")
+print(f"Found {len(df)} movies")
+print(df.head())
