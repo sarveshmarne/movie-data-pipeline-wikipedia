@@ -63,12 +63,10 @@ for table in tables:
             studio = cols[col_map["Studio"]].get_text(separator=", ").strip() if "Studio" in col_map else None
 
             all_movies.append({
-                "Year": 2025,
                 "Name": name,
                 "Director": director,
                 "Cast": cast,
-                "Studio": studio,
-                "Language": "hindi"
+                "Studio": studio
             })
 
         except:
@@ -81,7 +79,7 @@ df = pd.DataFrame(all_movies)
 df = df.drop_duplicates()
 
 os.makedirs("data/raw", exist_ok=True)
-df.to_csv("data/raw/movies_wikipedia_2025_clean_structured.csv", index=False)
+df.to_csv("data/raw/movies_wikipedia_2025_structured.csv", index=False)
 
 print(" Clean structured data saved!")
 print(f"Found {len(df)} movies")
