@@ -98,28 +98,18 @@ df_monthly_final = pd.DataFrame({
 df_final = pd.concat([df_monthly_final, df_top_clean], ignore_index=True)
 print(f"Combined movies: {len(df_final)}")
 
-# Split cast
-def split_cast(cast):
-    if pd.isna(cast):
-        return [np.nan, np.nan, np.nan]
-    cast_list = [c.strip() for c in str(cast).split(',') if c.strip()]
-    return cast_list[:3] + [np.nan] * (3 - len(cast_list))
-
-cast_split = df_final['Cast'].apply(split_cast).apply(pd.Series)
-df_final[['Cast_1', 'Cast_2', 'Cast_3']] = cast_split
-
 # Add metadata
 df_final['Year'] = 2025
 df_final['Language'] = 'hindi'
 
 # Select final columns, drop rows where Name is NaN/empty
-final_cols = ['Year', 'Name', 'Director', 'Cast_1', 'Cast_2', 'Cast_3', 'Studio', 'Language']
+final_cols = ['Year', 'Name', 'Director', 'Cast', 'Studio', 'Language']
 df_final = df_final[final_cols].dropna(subset=['Name'])
 
 print("Final shape:", df_final.shape)
 print(df_final.head(15))
 print("\nSample movies:")
-print(df_final[['Name', 'Director', 'Cast_1']].head(10))
+print(df_final[['Name', 'Director', 'Cast']].head(10))
 
 os.makedirs("data/processed", exist_ok=True)
 df_final.to_json("data/processed/movies_cleaned_2025_hindi.json", orient='records', indent=2)
