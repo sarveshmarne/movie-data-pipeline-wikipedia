@@ -5,7 +5,7 @@ import os
 import re
 
 def is_valid_movie_row(name):
-    """Filter out invalid rows while preserving valid movie data"""
+    """Filter out invalid rows for 2025 data"""
     if not name or not name.strip():
         return False
     
@@ -20,7 +20,7 @@ def is_valid_movie_row(name):
         return False
     
     # Skip common header/footer text
-    invalid_texts = ['title', 'ref.', 'opening', 'rank', 'none']
+    invalid_texts = ['title', 'ref.', 'opening', 'rank', 'none', 'director', 'cast', 'studio']
     if name.lower() in invalid_texts:
         return False
     
@@ -30,15 +30,15 @@ def is_valid_movie_row(name):
     
     return True
 
-# Fetch Wikipedia page with proper headers
+# Fetch Wikipedia page
 url = "https://en.wikipedia.org/wiki/List_of_Hindi_films_of_2025"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
 response = requests.get(url, headers=headers)
-response.raise_for_status()  # Ensure request was successful
+response.raise_for_status()
 soup = BeautifulSoup(response.text, "html.parser")
 
 # Find all wikitable elements
@@ -46,101 +46,55 @@ tables = soup.find_all("table", {"class": "wikitable"})
 
 all_movies = []
 
-for table in tables:
-    # Extract headers from first row
-    header_row = table.find("tr")
-    if not header_row:
+# HARDCODED: Only process monthly tables (tables 2, 3, 4, 5) which have correct structure
+monthly_table_indices = [2, 3, 4, 5]
+for i, table in enumerate(tables):
+    if i not in monthly_table_indices:
         continue
         
-    headers = [th.get_text(strip=True).lower() for th in header_row.find_all("th")]
-    
-    # Skip tables without movie-related headers
-    if not any(keyword in " ".join(headers) for keyword in ["title", "film", "movie"]):
-        continue
-
-    # Create column mapping based on headers
-    col_map = {}
-    for i, h in enumerate(headers):
-        if "title" in h or "film" in h:
-            col_map["Name"] = i
-        elif "director" in h:
-            col_map["Director"] = i
-        elif "cast" in h:
-            col_map["Cast"] = i
-        elif "studio" in h or "production" in h or "company" in h:
-            col_map["Studio"] = i
-        elif "distributor" in h:
-            col_map["Distributor"] = i
-        elif "gross" in h or "box office" in h:
-            col_map["BoxOffice"] = i
-
     # Process data rows (skip header row)
     rows = table.find_all("tr")[1:]
 
     for row in rows:
         cols = row.find_all("td")
         
-        if not cols or len(cols) < 2:
+        if not cols or len(cols) < 3:
             continue
 
         try:
-            # Extract movie name using header mapping
-            name = None
-            if "Name" in col_map:
-                name = cols[col_map["Name"]].get_text(strip=True)
+            # HARDCODED 2025 COLUMN MAPPING for monthly tables
+            # cols[0] = Opening, cols[1] = Title, cols[2] = Director, cols[3] = Cast, cols[4] = Studio
+            name = cols[1].get_text(strip=True) if len(cols) > 1 else None
+            director = cols[2].get_text(strip=True) if len(cols) > 2 else None
+            cast = cols[3].get_text(strip=True) if len(cols) > 3 else None
+            studio = cols[4].get_text(strip=True) if len(cols) > 4 else None
             
             # Validate row before processing
             if not is_valid_movie_row(name):
                 continue
 
-            # Extract other fields using mapping
-            movie_data = {"Name": name}
-            
-            if "Director" in col_map:
-                movie_data["Director"] = cols[col_map["Director"]].get_text(separator=", ").strip()
-            else:
-                movie_data["Director"] = None
-                
-            if "Cast" in col_map:
-                movie_data["Cast"] = cols[col_map["Cast"]].get_text(separator=", ").strip()
-            else:
-                movie_data["Cast"] = None
-                
-            if "Studio" in col_map:
-                movie_data["Studio"] = cols[col_map["Studio"]].get_text(separator=", ").strip()
-            else:
-                movie_data["Studio"] = None
-                
-            if "Distributor" in col_map:
-                movie_data["Distributor"] = cols[col_map["Distributor"]].get_text(separator=", ").strip()
-                
-            if "BoxOffice" in col_map:
-                movie_data["BoxOffice"] = cols[col_map["BoxOffice"]].get_text(strip=True)
-
-            all_movies.append(movie_data)
+            all_movies.append({
+                "Name": name,
+                "Director": director,
+                "Cast": cast,
+                "Studio": studio
+            })
 
         except Exception as e:
-            # Log error but continue processing other rows
             continue
 
-# Create structured DataFrame
+# Create DataFrame
 df = pd.DataFrame(all_movies)
 
-# Remove duplicates while preserving data quality
+# Remove duplicates
 df = df.drop_duplicates(subset=['Name'], keep='first')
 
-# Ensure consistent column order
-column_order = ['Name', 'Director', 'Cast', 'Studio', 'Distributor', 'BoxOffice']
-existing_columns = [col for col in column_order if col in df.columns]
-df = df[existing_columns]
-
-# Save with UTF-8 encoding for special characters
+# Save raw data
 os.makedirs("data/raw", exist_ok=True)
-output_file = "data/raw/movies_2025_hindi_raw.csv"
+output_file = "data/raw/movies_2025_raw.csv"
 df.to_csv(output_file, index=False, encoding="utf-8-sig")
 
-print(" Header-based structured scraping completed!")
+print("2025 Hindi movie scraping completed!")
 print(f"Found {len(df)} unique movies")
-print(f"Columns extracted: {list(df.columns)}")
-print("\nSample data:")
+print("\nSample raw data:")
 print(df.head(10).to_string(index=False))
