@@ -1,8 +1,5 @@
 import pandas as pd
-import requests
-from bs4 import BeautifulSoup
 import os
-import re
 
 def is_valid_movie_row(name):
     """Filter out invalid rows for 2025 data"""
@@ -12,7 +9,7 @@ def is_valid_movie_row(name):
     name = name.strip()
     
     # Skip month headers
-    if re.match(r'^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)', name, re.I):
+    if name.upper() in ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']:
         return False
     
     # Skip numeric-only rows
@@ -30,61 +27,42 @@ def is_valid_movie_row(name):
     
     return True
 
-# Fetch Wikipedia page
 url = "https://en.wikipedia.org/wiki/List_of_Hindi_films_of_2025"
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-}
+print("Reading tables from Wikipedia...")
+# Read ALL tables
+tables = pd.read_html(url)
 
-response = requests.get(url, headers=headers)
-response.raise_for_status()
-soup = BeautifulSoup(response.text, "html.parser")
+correct_df = None
 
-# Find all wikitable elements
-tables = soup.find_all("table", {"class": "wikitable"})
+# Find the correct table (the one with Director & Cast)
+for i, df in enumerate(tables):
+    cols = [str(c).lower() for c in df.columns]
+    
+    if "director" in str(cols) and "cast" in str(cols):
+        print(f"Found correct table at index {i}")
+        print(f"Table columns: {list(df.columns)}")
+        correct_df = df
+        break
 
-all_movies = []
+# If not found
+if correct_df is None:
+    print("Available tables and their columns:")
+    for i, df in enumerate(tables):
+        print(f"Table {i}: {list(df.columns)}")
+    raise Exception("Correct table not found")
 
-# HARDCODED: Only process monthly tables (tables 2, 3, 4, 5) which have correct structure
-monthly_table_indices = [2, 3, 4, 5]
-for i, table in enumerate(tables):
-    if i not in monthly_table_indices:
-        continue
-        
-    # Process data rows (skip header row)
-    rows = table.find_all("tr")[1:]
+# Clean column names
+correct_df.columns = [str(c).strip() for c in correct_df.columns]
 
-    for row in rows:
-        cols = row.find_all("td")
-        
-        if not cols or len(cols) < 3:
-            continue
+# Remove junk rows
+correct_df = correct_df[correct_df["Title"].notna()]
+correct_df = correct_df[~correct_df["Title"].str.contains("JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC", case=False, na=False)]
+correct_df = correct_df[~correct_df["Title"].astype(str).str.isdigit()]
 
-        try:
-            # HARDCODED 2025 COLUMN MAPPING for monthly tables
-            # cols[0] = Opening, cols[1] = Title, cols[2] = Director, cols[3] = Cast, cols[4] = Studio
-            name = cols[1].get_text(strip=True) if len(cols) > 1 else None
-            director = cols[2].get_text(strip=True) if len(cols) > 2 else None
-            cast = cols[3].get_text(strip=True) if len(cols) > 3 else None
-            studio = cols[4].get_text(strip=True) if len(cols) > 4 else None
-            
-            # Validate row before processing
-            if not is_valid_movie_row(name):
-                continue
-
-            all_movies.append({
-                "Name": name,
-                "Director": director,
-                "Cast": cast,
-                "Studio": studio
-            })
-
-        except Exception as e:
-            continue
-
-# Create DataFrame
-df = pd.DataFrame(all_movies)
+# Select correct columns
+df = correct_df[["Title", "Director", "Cast", "Studio (production house)"]].copy()
+df.columns = ["Name", "Director", "Cast", "Studio"]
 
 # Remove duplicates
 df = df.drop_duplicates(subset=['Name'], keep='first')
