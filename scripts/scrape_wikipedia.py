@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import requests
 
 def is_valid_movie_row(name):
     """Filter out invalid rows for 2025 data"""
@@ -30,8 +31,15 @@ def is_valid_movie_row(name):
 url = "https://en.wikipedia.org/wiki/List_of_Hindi_films_of_2025"
 
 print("Reading tables from Wikipedia...")
-# Read ALL tables
-tables = pd.read_html(url)
+# Download HTML first with headers to avoid 403 error
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+}
+response = requests.get(url, headers=headers)
+response.raise_for_status()
+
+# Read tables from the HTML string
+tables = pd.read_html(response.text)
 
 correct_df = None
 
